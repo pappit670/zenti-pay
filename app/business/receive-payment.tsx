@@ -327,49 +327,6 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '800',
     fontSize: 16,
-  }
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    paddingTop: 60,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    marginBottom: 40,
-  },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  amountContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  amountLabel: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  amountText: {
-    color: '#fff',
-    fontSize: 48,
-    fontWeight: '700',
-    letterSpacing: -1,
   },
   methodsContainer: {
     flex: 1,
@@ -384,12 +341,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '500',
-  },
-  qrWrapper: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    overflow: 'hidden',
   },
   lockedQr: {
     opacity: 0.5,
@@ -456,3 +407,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   }
 });
+
