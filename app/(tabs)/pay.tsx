@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
-import { Delete } from 'lucide-react-native';
-import { useTheme } from '@/contexts/ThemeContext';
+import { Delete, Divide, Minus, Plus, X, Scan, Smartphone } from 'lucide-react-native';
+import { useZenti } from '@/contexts/ZentiContext';
+import SwipeButton from '@/components/SwipeButton';
+
+const { width } = Dimensions.get('window');
 
 export default function PayScreen() {
   const [amount, setAmount] = useState('0');
+  const [mode, setMode] = useState<'send' | 'pos'>('send');
   const router = useRouter();
-  const { theme, colors } = useTheme();
+  const { showIsland, createSession } = useZenti();
 
   const handleNumberPress = (num: string) => {
     if (amount === '0') {
@@ -33,145 +35,110 @@ export default function PayScreen() {
     }
   };
 
-  const handlePay = () => {
-    if (parseFloat(amount) > 0) {
-      router.push({
-        pathname: '/send-recipient',
-        params: { amount }
-      });
+  const handleConfirm = () => {
+    const amountNum = parseFloat(amount);
+    if (amountNum > 0) {
+      if (mode === 'send') {
+        showIsland({ type: 'pending', amount: amountNum });
+        setTimeout(() => {
+          router.push({ pathname: '/send-recipient', params: { amount } });
+          showIsland({ type: 'success', amount: amountNum });
+        }, 1500);
+      } else {
+        // POS Mode: navigate to receive screen with session setup
+        router.push({ pathname: '/business/receive-payment', params: { amount } });
+      }
     }
   };
 
-  const handleRequest = () => {
-    router.push({
-      pathname: '/request',
-      params: { amount }
-    });
-  };
-
-  const gradientColors = (theme === 'light'
-    ? ['#f5f5f5', '#ffffff', '#f5f5f5']
-    : ['#0a0a0a', '#000000', '#0a0a0a']) as [string, string, ...string[]];
-
-  const keyGradientColors = (theme === 'light'
-    ? ['rgba(0, 0, 0, 0.08)', 'rgba(0, 0, 0, 0.03)']
-    : ['rgba(255, 255, 255, 0.15)', 'rgba(255, 255, 255, 0.05)']) as [string, string, ...string[]];
-
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={gradientColors}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Smart Pay</Text>
+        <View style={styles.tabContainer}>
+          <Pressable 
+            style={[styles.tab, mode === 'send' && styles.activeTab]} 
+            onPress={() => setMode('send')}
+          >
+            <Text style={[styles.tabText, mode === 'send' && styles.activeTabText]}>Send</Text>
+          </Pressable>
+          <Pressable 
+            style={[styles.tab, mode === 'pos' && styles.activeTab]} 
+            onPress={() => setMode('pos')}
+          >
+            <Text style={[styles.tabText, mode === 'pos' && styles.activeTabText]}>POS System</Text>
+          </Pressable>
+        </View>
+        <Text style={styles.balanceText}>
+          {mode === 'send' ? 'Available KES 7,854.43' : 'Machine Status: Ready to receive'}
+        </Text>
       </View>
 
       <View style={styles.amountContainer}>
-        <Text style={[styles.currencySymbol, { color: colors.textSecondary }]}>$</Text>
-        <Text style={[styles.amount, { color: colors.text }]}>{amount}</Text>
-      </View>
-
-      <View style={styles.keyboardContainer}>
-        <View style={styles.keyboardRow}>
-          {['1', '2', '3'].map((num) => (
-            <Pressable key={num} style={styles.key} onPress={() => handleNumberPress(num)}>
-              <BlurView intensity={30} tint={theme} style={styles.keyBlur}>
-                <LinearGradient colors={keyGradientColors} style={styles.keyGradient}>
-                  <Text style={[styles.keyText, { color: colors.text }]}>{num}</Text>
-                </LinearGradient>
-              </BlurView>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.keyboardRow}>
-          {['4', '5', '6'].map((num) => (
-            <Pressable key={num} style={styles.key} onPress={() => handleNumberPress(num)}>
-              <BlurView intensity={30} tint={theme} style={styles.keyBlur}>
-                <LinearGradient colors={keyGradientColors} style={styles.keyGradient}>
-                  <Text style={[styles.keyText, { color: colors.text }]}>{num}</Text>
-                </LinearGradient>
-              </BlurView>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.keyboardRow}>
-          {['7', '8', '9'].map((num) => (
-            <Pressable key={num} style={styles.key} onPress={() => handleNumberPress(num)}>
-              <BlurView intensity={30} tint={theme} style={styles.keyBlur}>
-                <LinearGradient colors={keyGradientColors} style={styles.keyGradient}>
-                  <Text style={[styles.keyText, { color: colors.text }]}>{num}</Text>
-                </LinearGradient>
-              </BlurView>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={styles.keyboardRow}>
-          <Pressable style={styles.key} onPress={handleDecimalPress}>
-            <BlurView intensity={30} tint={theme} style={styles.keyBlur}>
-              <LinearGradient colors={keyGradientColors} style={styles.keyGradient}>
-                <Text style={[styles.keyText, { color: colors.text }]}>.</Text>
-              </LinearGradient>
-            </BlurView>
-          </Pressable>
-          <Pressable style={styles.key} onPress={() => handleNumberPress('0')}>
-            <BlurView intensity={30} tint={theme} style={styles.keyBlur}>
-              <LinearGradient colors={keyGradientColors} style={styles.keyGradient}>
-                <Text style={[styles.keyText, { color: colors.text }]}>0</Text>
-              </LinearGradient>
-            </BlurView>
-          </Pressable>
-          <Pressable style={styles.key} onPress={handleDelete}>
-            <BlurView intensity={30} tint={theme} style={styles.keyBlur}>
-              <LinearGradient colors={keyGradientColors} style={styles.keyGradient}>
-                <Delete color={colors.text} size={28} strokeWidth={2.5} />
-              </LinearGradient>
-            </BlurView>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.actionsContainer}>
-        <Pressable style={styles.actionButton} onPress={handleRequest}>
-          <BlurView intensity={30} tint={theme} style={styles.actionBlur}>
-            <LinearGradient colors={keyGradientColors} style={styles.actionGradient}>
-              <Text style={[styles.actionButtonText, { color: colors.text }]}>Request</Text>
-            </LinearGradient>
-          </BlurView>
-        </Pressable>
-
-        <Pressable
-          style={styles.actionButton}
-          onPress={handlePay}
-          disabled={parseFloat(amount) === 0}
+        <Text style={styles.currencySymbol}>KES</Text>
+        <Text style={styles.amountText}>{amount}</Text>
+        <Pressable 
+          style={styles.scanIcon} 
+          onPress={() => router.push('/scan')}
         >
-          <LinearGradient
-            colors={
-              parseFloat(amount) === 0
-                ? ['rgba(100, 100, 100, 0.3)', 'rgba(100, 100, 100, 0.2)']
-                : theme === 'light'
-                ? ['#000000', '#1a1a1a']
-                : ['#ffffff', '#f0f0f0']
-            }
-            style={styles.payGradient}
-          >
-            <Text
-              style={[
-                styles.actionButtonText,
-                theme === 'light' ? styles.payButtonTextLight : styles.payButtonTextDark,
-                parseFloat(amount) === 0 && styles.payButtonTextDisabled
-              ]}
-            >
-              Send
-            </Text>
-          </LinearGradient>
+           <Scan color="rgba(255,255,255,0.6)" size={28} />
         </Pressable>
       </View>
+
+      <View style={styles.controlsContainer}>
+        <View style={styles.operatorRow}>
+          <Pressable style={styles.opKey}><Plus color="#fff" size={20} /></Pressable>
+          <Pressable style={styles.opKey}><Minus color="#fff" size={20} /></Pressable>
+          <Pressable style={styles.opKey}><X color="#fff" size={20} /></Pressable>
+          <Pressable style={styles.opKey}><Divide color="#fff" size={20} /></Pressable>
+        </View>
+
+        <View style={styles.keyboardContainer}>
+          {[
+            ['1', '2', '3'],
+            ['4', '5', '6'],
+            ['7', '8', '9'],
+            ['.', '0', 'delete']
+          ].map((row, i) => (
+            <View key={i} style={styles.keyboardRow}>
+              {row.map((key) => (
+                <Pressable 
+                  key={key} 
+                  style={styles.key} 
+                  onPress={() => {
+                    if (key === 'delete') handleDelete();
+                    else if (key === '.') handleDecimalPress();
+                    else handleNumberPress(key);
+                  }}
+                >
+                  <View style={styles.keyInner}>
+                    {key === 'delete' ? <Delete color="#fff" size={24} /> : <Text style={styles.keyText}>{key}</Text>}
+                  </View>
+                </Pressable>
+              ))}
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.swipeContainer}>
+          {parseFloat(amount) > 0 ? (
+            <SwipeButton 
+              onComplete={handleConfirm} 
+              title={mode === 'send' ? "Swipe right to send" : "Swipe to generate QR/NFC"} 
+            />
+          ) : (
+            <View style={styles.placeholderButton}>
+                <Text style={styles.placeholderText}>
+                  {mode === 'send' ? 'Enter amount to send' : 'Enter amount to receive'}
+                </Text>
+            </View>
+          )}
+        </View>
+      </View>
+      
+      {/* Back to Home close button */}
+      <Pressable style={styles.closeButton} onPress={() => router.push('/')}>
+          <X color="#fff" size={28} />
+      </Pressable>
     </View>
   );
 }
@@ -179,114 +146,136 @@ export default function PayScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
     paddingTop: 60,
   },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
   header: {
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    alignItems: 'center',
+    paddingBottom: 20,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    padding: 4,
+    borderRadius: 24,
+    marginBottom: 8,
+  },
+  tab: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  activeTab: {
+    backgroundColor: '#fff',
+  },
+  tabText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  activeTabText: {
+    color: '#000',
+    fontWeight: '700',
+  },
+  balanceText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    fontWeight: '500',
   },
   amountContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 60,
+    height: 140,
+    marginTop: 20,
+    position: 'relative',
   },
   currencySymbol: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    marginRight: 8,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#fff',
+    marginRight: 6,
+    opacity: 0.8,
   },
-  amount: {
-    fontSize: 64,
-    fontWeight: 'bold',
+  amountText: {
+    fontSize: 84,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: -2,
+  },
+  scanIcon: {
+    position: 'absolute',
+    right: width * 0.1,
+    top: '40%',
+  },
+  controlsContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    paddingBottom: 30,
+  },
+  operatorRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 32,
+    marginBottom: 24,
+  },
+  opKey: {
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   keyboardContainer: {
     paddingHorizontal: 24,
-    gap: 16,
+    gap: 12,
   },
   keyboardRow: {
     flexDirection: 'row',
-    gap: 16,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
   },
   key: {
-    width: 80,
-    height: 80,
-  },
-  keyBlur: {
     flex: 1,
-    borderRadius: 40,
-    overflow: 'hidden',
+    height: 64,
   },
-  keyGradient: {
+  keyInner: {
     flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.2)',
-    borderRadius: 40,
+    borderRadius: 32,
   },
   keyText: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: '600',
+    color: '#fff',
   },
-  actionsContainer: {
-    flexDirection: 'row',
+  swipeContainer: {
     paddingHorizontal: 24,
-    paddingTop: 40,
-    gap: 16,
+    marginTop: 32,
+    height: 64,
   },
-  actionButton: {
+  placeholderButton: {
     flex: 1,
-    height: 60,
-  },
-  actionBlur: {
-    flex: 1,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  actionGradient: {
-    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(128, 128, 128, 0.2)',
-    borderRadius: 16,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
-  actionButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  placeholderText: {
+    color: 'rgba(255,255,255,0.2)',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  payGradient: {
-    flex: 1,
+  closeButton: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  payButtonTextLight: {
-    color: '#ffffff',
-  },
-  payButtonTextDark: {
-    color: '#000000',
-  },
-  payButtonTextDisabled: {
-    color: 'rgba(128, 128, 128, 0.5)',
-  },
+  }
 });

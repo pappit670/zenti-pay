@@ -78,7 +78,7 @@ export default function CreateInvoiceScreen() {
         recipient_name: recipientName,
         recipient_address: recipientAddress,
         total_amount: totalAmount,
-        currency: 'USD',
+        currency: 'KSH',
         status: 'draft',
       })
       .select()
@@ -202,7 +202,7 @@ export default function CreateInvoiceScreen() {
                 <View style={styles.itemTotal}>
                   <Text style={styles.fieldLabel}>Total</Text>
                   <Text style={styles.totalAmount}>
-                    ${(item.quantity * item.unit_price).toFixed(2)}
+                    KSh {(item.quantity * item.unit_price).toFixed(2)}
                   </Text>
                 </View>
               </View>
@@ -212,7 +212,7 @@ export default function CreateInvoiceScreen() {
 
         <View style={styles.totalSection}>
           <Text style={styles.totalLabel}>Total amount</Text>
-          <Text style={styles.totalValue}>${calculateTotal().toFixed(2)}</Text>
+          <Text style={styles.totalValue}>KSh {calculateTotal().toFixed(2)}</Text>
         </View>
 
         <Pressable

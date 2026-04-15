@@ -32,16 +32,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        setSession(session);
+        setUser(session.user);
+      } else {
+        // Mock session for development
+        setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
+      }
       setLoading(false);
     });
 
     supabase.auth.onAuthStateChange((_event, session) => {
-      (async () => {
+      if (session) {
         setSession(session);
-        setUser(session?.user ?? null);
-      })();
+        setUser(session.user);
+      } else {
+        setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
+      }
     });
   }, []);
 
@@ -84,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.from('accounts').insert({
         user_id: data.user.id,
         account_type: 'wallet',
-        currency: 'USD',
+        currency: 'KSH',
         balance: 0,
         account_number: accountNumber,
         is_primary: true,
