@@ -58,7 +58,7 @@ export default function RecoveryPhrasePage() {
                 <Text style={styles.listSubtitle}>If it's been seen or copied, create a new wallet immediately.</Text>
               </View>
             </Pressable>
-          </list>
+          </View>
 
           <Pressable 
             style={[styles.button, !allChecked && styles.buttonDisabled]} 
