@@ -31,25 +31,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let isMounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return;
+
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        } else {
+          // Mock session for development
+          setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!isMounted) return;
+
       if (session) {
         setSession(session);
         setUser(session.user);
       } else {
-        // Mock session for development
         setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
       }
-      setLoading(false);
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        setSession(session);
-        setUser(session.user);
-      } else {
-        setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
-      }
-    });
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
