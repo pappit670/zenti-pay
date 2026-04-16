@@ -6,6 +6,7 @@ import Animated, {
   withSpring, 
   withTiming, 
   withDelay,
+  withSequence,
   Easing,
   interpolate,
   Extrapolate
@@ -148,16 +149,7 @@ export default function ZentiIsland() {
   );
 }
 
-// helper for animation sequence
-function withSequence(...animations: any[]) {
-  'worklet';
-  let next = animations.pop();
-  while (animations.length > 0) {
-    const current = animations.pop();
-    next = withTiming(current.value, current.config, () => next);
-  }
-  return next;
-}
+// Custom definition removed. Using built-in withSequence from react-native-reanimated.
 
 const styles = StyleSheet.create({
   container: {

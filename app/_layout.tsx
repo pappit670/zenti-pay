@@ -8,12 +8,14 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ZentiProvider } from '@/contexts/ZentiContext';
 import ZentiIsland from '@/components/ZentiIsland';
 import './global.css';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   useFrameworkReady();
 
   return (
-    <AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
       <ThemeProvider>
         <ModeProvider>
           <ZentiProvider>
@@ -35,5 +37,6 @@ export default function RootLayout() {
         </ModeProvider>
       </ThemeProvider>
     </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

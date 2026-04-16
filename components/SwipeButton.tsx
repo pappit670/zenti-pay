@@ -1,14 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
-import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, { 
-  useAnimatedGestureHandler, 
   useAnimatedStyle, 
   useSharedValue, 
   withSpring, 
   runOnJS,
-  interpolate,
-  Extrapolate
+  interpolate
 } from 'react-native-reanimated';
 import { ChevronRight } from 'lucide-react-native';
 
@@ -25,16 +23,12 @@ export default function SwipeButton({ onComplete, title = "Swipe right to confir
   const translateX = useSharedValue(0);
   const isCompleted = useSharedValue(false);
 
-  const gestureHandler = useAnimatedGestureHandler<PanGestureHandlerGestureEvent, { startX: number }>({
-    onStart: (_, ctx) => {
-      ctx.startX = translateX.value;
-    },
-    onActive: (event, ctx) => {
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
       if (isCompleted.value) return;
-      const newValue = ctx.startX + event.translationX;
-      translateX.value = Math.min(Math.max(newValue, 0), SWIPE_RANGE);
-    },
-    onEnd: () => {
+      translateX.value = Math.min(Math.max(event.translationX, 0), SWIPE_RANGE);
+    })
+    .onEnd(() => {
       if (translateX.value > SWIPE_RANGE * 0.8) {
         translateX.value = withSpring(SWIPE_RANGE);
         isCompleted.value = true;
@@ -42,8 +36,7 @@ export default function SwipeButton({ onComplete, title = "Swipe right to confir
       } else {
         translateX.value = withSpring(0);
       }
-    },
-  });
+    });
 
   const animatedThumbStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -57,11 +50,11 @@ export default function SwipeButton({ onComplete, title = "Swipe right to confir
     <View style={styles.container}>
       <Animated.Text style={[styles.title, animatedTextStyle]}>{title}</Animated.Text>
       
-      <PanGestureHandler onGestureEvent={gestureHandler}>
+      <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.thumb, animatedThumbStyle]}>
           <ChevronRight color="#000" size={32} strokeWidth={3} />
         </Animated.View>
-      </PanGestureHandler>
+      </GestureDetector>
     </View>
   );
 }
