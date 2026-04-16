@@ -17,6 +17,8 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useZenti } from '@/contexts/ZentiContext';
+import AddCashModal from '@/components/AddCashModal';
+import ProfileMenuModal from '@/components/ProfileMenuModal';
 import Animated, { 
   FadeInUp, 
   FadeInDown, 
@@ -44,6 +46,8 @@ export default function HomeScreen() {
   const { showIsland, cardState, balance } = useZenti();
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
+  const [showAddCash, setShowAddCash] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   const scrollY = useSharedValue(0);
 
@@ -76,7 +80,7 @@ export default function HomeScreen() {
           <Pressable style={styles.headerIcon} onPress={() => router.push('/wallet')}>
             <CreditCard color="#fff" size={24} strokeWidth={2.5} />
           </Pressable>
-          <Pressable style={styles.headerIcon} onPress={() => router.push('/profile')}>
+          <Pressable style={styles.headerIcon} onPress={() => setShowProfile(true)}>
             <View style={styles.profileCircle}>
                <Image 
                  source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' }} 
@@ -118,7 +122,7 @@ export default function HomeScreen() {
               <Text style={styles.balanceAmount}>KES {balance.toLocaleString()}</Text>
               
               <View style={styles.actionRow}>
-                 <Pressable style={styles.actionButton} onPress={() => router.push('/add-funds')}>
+                 <Pressable style={styles.actionButton} onPress={() => setShowAddCash(true)}>
                     <Text style={styles.actionButtonText}>Add money</Text>
                  </Pressable>
                  <Pressable style={styles.actionButton} onPress={() => router.push('/withdraw' as any)}>
@@ -160,6 +164,9 @@ export default function HomeScreen() {
            </ScrollView>
         </View>
       </Animated.ScrollView>
+
+      <AddCashModal visible={showAddCash} onClose={() => setShowAddCash(false)} />
+      <ProfileMenuModal visible={showProfile} onClose={() => setShowProfile(false)} />
     </View>
   );
 }
