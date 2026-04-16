@@ -15,6 +15,7 @@ import {
   Scan,
   LayoutGrid
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useZenti } from '@/contexts/ZentiContext';
 
 const { width } = Dimensions.get('window');
@@ -101,13 +102,11 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
       >
-        {/* Card Section - Center of Attention */}
         <View style={styles.cardSection}>
           <Pressable style={styles.cardContainer} onPress={() => router.push('/wallet/detail')}>
-             <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1621416848440-2369c44dd761?q=80&w=2000&auto=format&fit=crop' }} 
+             <LinearGradient 
+                colors={['#1A1A1A', '#000000']}
                 style={styles.cardGraphic}
-                blurRadius={1}
              />
              <View style={styles.cardOverlay}>
                 <Text style={styles.cardBrand}>Zenti Black</Text>

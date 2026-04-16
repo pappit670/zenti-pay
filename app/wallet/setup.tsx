@@ -24,7 +24,7 @@ export default function CardSetupPage() {
 
   const handleGetCard = () => {
     updateCardState({ color: selectedColor.colors[0] });
-    router.push('/wallet/ready');
+    router.push('/onboarding/recovery-phrase');
   };
 
   return (

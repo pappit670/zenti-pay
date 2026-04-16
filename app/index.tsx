@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
@@ -6,7 +6,11 @@ export default function WelcomeScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/onboarding/recovery-phrase');
+    // Small delay to ensure layout is mounted
+    const timer = setTimeout(() => {
+        router.replace('/wallet/setup');
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   return <View style={{ flex: 1, backgroundColor: '#000' }} />;

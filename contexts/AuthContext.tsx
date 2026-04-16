@@ -31,40 +31,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
+    // Immediate mock session for development to prevent loading hangs
+    setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
+    setLoading(false);
 
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        if (!isMounted) return;
-
-        if (session) {
-          setSession(session);
-          setUser(session.user);
-        } else {
-          // Mock session for development
-          setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
-        }
-      })
-      .finally(() => {
-        if (isMounted) {
-          setLoading(false);
-        }
-      });
-
+    // Still listen for real changes in the background if they ever happen
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!isMounted) return;
-
       if (session) {
         setSession(session);
         setUser(session.user);
-      } else {
-        setUser({ id: 'mock-user-id', email: 'test@zenti.com' } as any);
       }
     });
 
     return () => {
-      isMounted = false;
       authListener.subscription.unsubscribe();
     };
   }, []);

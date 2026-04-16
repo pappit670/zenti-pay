@@ -62,7 +62,7 @@ export default function RecoveryPhrasePage() {
 
           <Pressable 
             style={[styles.button, !allChecked && styles.buttonDisabled]} 
-            onPress={() => allChecked && router.push('/wallet/setup')}
+            onPress={() => allChecked && router.push('/wallet/ready')}
           >
             <Text style={[styles.buttonText, !allChecked && styles.buttonTextDisabled]}>I understand, continue</Text>
           </Pressable>
