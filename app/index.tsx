@@ -1,66 +1,15 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const { session, loading } = useAuth();
 
   useEffect(() => {
-    if (!loading && session) {
-      router.replace('/(tabs)');
-    }
-  }, [session, loading]);
+    router.replace('/onboarding/recovery-phrase');
+  }, []);
 
-  if (loading) {
-    return <View style={styles.container} />;
-  }
-
-  if (session) {
-    return <View style={styles.container} />;
-  }
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.mainSection}>
-        <View style={styles.logoContainer}>
-          <View style={styles.zIconContainer}>
-            <View style={[styles.zLine, { width: 50, top: 0 }]} />
-            <View style={[styles.zLine, { width: 35, top: 15, left: 15 }]} />
-            <View style={[styles.zLine, { width: 50, bottom: 0 }]} />
-            <View style={styles.zDiagonal} />
-          </View>
-          <Text style={styles.brandName}>Zenti</Text>
-        </View>
-
-        <View style={styles.buttonContainer}>
-          <Pressable
-            style={styles.primaryButton}
-            onPress={() => router.push('/onboarding')}
-          >
-            <Text style={styles.primaryButtonText}>Get Started</Text>
-          </Pressable>
-
-          <Pressable
-            style={styles.secondaryButton}
-            onPress={() => router.push('/auth/signin')}
-          >
-            <Text style={styles.secondaryButtonText}>Log In</Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <View style={styles.heroSection}>
-        <Text style={styles.subtitle}>
-          The smartest way to manage your money.
-        </Text>
-        <Text style={styles.subtitle}>
-          Personal & Business banking reimagined.
-        </Text>
-      </View>
-    </View>
-  );
+  return <View style={{ flex: 1, backgroundColor: '#000' }} />;
 }
 
 const styles = StyleSheet.create({
