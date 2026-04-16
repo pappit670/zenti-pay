@@ -1,10 +1,18 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
+export type Recipient = {
+  id: string;
+  name: string;
+  tag: string;
+  avatar?: string;
+  color?: string;
+};
+
 export type IslandState =
   | { type: "idle" }
-  | { type: "success"; amount: number; name?: string }
+  | { type: "success"; amount: number; name?: string; recipient?: Recipient }
   | { type: "error"; message: string }
-  | { type: "pending"; amount: number }
+  | { type: "pending"; amount: number; recipient?: Recipient }
   | { type: "request"; amount: number; from: string }
   | { type: "blocked" }
   | { type: "insufficient_balance" };
@@ -14,6 +22,7 @@ interface PaymentSession {
   amount: number;
   status: 'pending' | 'locked' | 'completed' | 'failed';
   method?: 'qr' | 'nfc';
+  recipient?: Recipient;
 }
 
 interface CardState {
@@ -21,6 +30,7 @@ interface CardState {
   isBlocked: boolean;
   balance: number;
   isSetup: boolean;
+  type: 'zenti' | 'bank';
 }
 
 interface ZentiContextType {
@@ -28,13 +38,16 @@ interface ZentiContextType {
   showIsland: (state: IslandState) => void;
   hideIsland: () => void;
   session: PaymentSession | null;
-  createSession: (amount: number) => string;
+  createSession: (amount: number, recipient?: Recipient) => string;
   lockSession: (method: 'qr' | 'nfc') => boolean;
   completeSession: () => void;
   failSession: () => void;
   resetSession: () => void;
   cardState: CardState;
   updateCardState: (updates: Partial<CardState>) => void;
+  selectedRecipient: Recipient | null;
+  setRecipient: (recipient: Recipient | null) => void;
+  balance: number;
 }
 
 const ZentiContext = createContext<ZentiContextType | undefined>(undefined);
@@ -42,16 +55,18 @@ const ZentiContext = createContext<ZentiContextType | undefined>(undefined);
 export function ZentiProvider({ children }: { children: ReactNode }) {
   const [islandState, setIslandState] = useState<IslandState>({ type: "idle" });
   const [session, setSession] = useState<PaymentSession | null>(null);
+  const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
+  const [balance, setBalance] = useState(7854.43);
   const [cardState, setCardState] = useState<CardState>({
-    color: '#FF6B6B',
+    color: '#000000',
     isBlocked: false,
-    balance: 0.007265,
-    isSetup: false,
+    balance: 7854.43,
+    isSetup: true,
+    type: 'zenti'
   });
 
   const showIsland = useCallback((state: IslandState) => {
     setIslandState(state);
-    // Auto-dismiss for non-request states
     if (state.type !== 'idle' && state.type !== 'request' && state.type !== 'pending' && state.type !== 'blocked' && state.type !== 'insufficient_balance') {
       setTimeout(() => {
         setIslandState({ type: "idle" });
@@ -63,9 +78,9 @@ export function ZentiProvider({ children }: { children: ReactNode }) {
     setIslandState({ type: "idle" });
   }, []);
 
-  const createSession = useCallback((amount: number) => {
+  const createSession = useCallback((amount: number, recipient?: Recipient) => {
     const id = Math.random().toString(36).substring(7);
-    setSession({ id, amount, status: 'pending' });
+    setSession({ id, amount, status: 'pending', recipient });
     return id;
   }, []);
 
@@ -76,9 +91,11 @@ export function ZentiProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   const completeSession = useCallback(() => {
-    setSession(prev => prev ? { ...prev, status: 'completed' } : null);
     if (session) {
-      showIsland({ type: "success", amount: session.amount });
+      setBalance(prev => prev - session.amount);
+      setCardState(prev => ({ ...prev, balance: prev.balance - session.amount }));
+      setSession(prev => prev ? { ...prev, status: 'completed' } : null);
+      showIsland({ type: "success", amount: session.amount, recipient: session.recipient });
     }
   }, [session, showIsland]);
 
@@ -95,6 +112,10 @@ export function ZentiProvider({ children }: { children: ReactNode }) {
     setCardState(prev => ({ ...prev, ...updates }));
   }, []);
 
+  const setRecipient = useCallback((recipient: Recipient | null) => {
+    setSelectedRecipient(recipient);
+  }, []);
+
   return (
     <ZentiContext.Provider value={{
       islandState,
@@ -108,6 +129,9 @@ export function ZentiProvider({ children }: { children: ReactNode }) {
       resetSession,
       cardState,
       updateCardState,
+      selectedRecipient,
+      setRecipient,
+      balance,
     }}>
       {children}
     </ZentiContext.Provider>

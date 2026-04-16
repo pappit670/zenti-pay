@@ -24,29 +24,27 @@ export default function ZentiIsland() {
 
   useEffect(() => {
     if (islandState.type !== 'idle') {
-      translateY.value = withSpring(0, { damping: 15, stiffness: 100 });
-      opacity.value = withTiming(1, { duration: 300 });
+      translateY.value = withSpring(0, { damping: 10, stiffness: 120 });
+      opacity.value = withTiming(1, { duration: 200 });
       
-      // Bounce effect
       scale.value = withSequence(
-        withTiming(1.05, { duration: 150 }),
+        withTiming(1.08, { duration: 100 }),
         withSpring(1)
       );
 
-      // Auto-dismiss for certain states
       if (['success', 'error', 'pending'].includes(islandState.type)) {
         if (islandState.type !== 'pending') {
           const timeout = setTimeout(() => {
-            translateY.value = withSpring(-120);
-            opacity.value = withTiming(0, { duration: 300 });
-            setTimeout(hideIsland, 350);
-          }, 3000);
+            translateY.value = withSpring(-120, { damping: 15 });
+            opacity.value = withTiming(0, { duration: 200 });
+            setTimeout(hideIsland, 250);
+          }, 1800);
           return () => clearTimeout(timeout);
         }
       }
     } else {
       translateY.value = withSpring(-120);
-      opacity.value = withTiming(0, { duration: 300 });
+      opacity.value = withTiming(0, { duration: 200 });
     }
   }, [islandState]);
 

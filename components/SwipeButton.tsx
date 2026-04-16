@@ -17,21 +17,26 @@ const SWIPE_RANGE = BUTTON_WIDTH - BUTTON_HEIGHT;
 interface SwipeButtonProps {
   onComplete: () => void;
   title?: string;
+  revertOnFinish?: boolean;
 }
 
-export default function SwipeButton({ onComplete, title = "Swipe right to confirm" }: SwipeButtonProps) {
+export default function SwipeButton({ onComplete, title = "Swipe right to confirm", revertOnFinish = false }: SwipeButtonProps) {
   const translateX = useSharedValue(0);
   const isCompleted = useSharedValue(false);
 
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
-      if (isCompleted.value) return;
+      if (isCompleted.value && !revertOnFinish) return;
       translateX.value = Math.min(Math.max(event.translationX, 0), SWIPE_RANGE);
     })
     .onEnd(() => {
       if (translateX.value > SWIPE_RANGE * 0.8) {
-        translateX.value = withSpring(SWIPE_RANGE);
-        isCompleted.value = true;
+        if (!revertOnFinish) {
+          translateX.value = withSpring(SWIPE_RANGE);
+          isCompleted.value = true;
+        } else {
+          translateX.value = withSpring(0);
+        }
         runOnJS(onComplete)();
       } else {
         translateX.value = withSpring(0);

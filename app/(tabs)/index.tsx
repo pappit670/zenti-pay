@@ -3,174 +3,163 @@ import { View, Text, StyleSheet, Pressable, ScrollView, RefreshControl, Dimensio
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMode } from '@/contexts/ModeContext';
-import { supabase } from '@/lib/supabase';
-import { Profile, Account } from '@/types/database';
 import { 
   User, 
-  Search, 
   CreditCard, 
-  Menu, 
   ArrowUpRight, 
   ArrowDownLeft, 
   Scan,
-  LayoutGrid
+  LayoutGrid,
+  Bell,
+  Search,
+  Wallet as WalletIcon,
+  ChevronRight
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useZenti } from '@/contexts/ZentiContext';
+import Animated, { 
+  FadeInUp, 
+  FadeInDown, 
+  SlideInRight,
+  useSharedValue,
+  useAnimatedStyle,
+  useAnimatedScrollHandler,
+  interpolate,
+  Extrapolate,
+  withSequence,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
-interface Transaction {
-  id: string;
-  amount: number;
-  type: 'send' | 'receive';
-  recipient?: string;
-  sender?: string;
-  created_at: string;
-}
+const MOCK_TRANSACTIONS = [
+  { id: '1', amount: 450, type: 'receive', sender: 'John Doe', meta: 'Dinner Split', date: 'Today' },
+  { id: '2', amount: 1200, type: 'send', recipient: 'Amazon', meta: 'Electronics', date: 'Yesterday' },
+  { id: '3', amount: 85, type: 'receive', sender: 'Apple', meta: 'Subscription Refund', date: 'Oct 12' },
+  { id: '4', amount: 2500, type: 'send', recipient: 'Rent', meta: 'Monthly Rent', date: 'Oct 01' },
+];
 
 export default function HomeScreen() {
-  const { user } = useAuth();
-  const { currentMode } = useMode();
-  const { showIsland } = useZenti();
+  const { showIsland, cardState, balance } = useZenti();
   const router = useRouter();
-  
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [account, setAccount] = useState<Account | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchData();
-  }, [user]);
+  const scrollY = useSharedValue(0);
 
-  const fetchData = async () => {
-    if (!user) return;
-    const { data: p } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle();
-    const { data: a } = await supabase.from('accounts').select('*').eq('user_id', user.id).eq('is_primary', true).maybeSingle();
-    const { data: tx } = await supabase.from('transactions').select('*').limit(10).order('created_at', { ascending: false });
-
-    if (p) setProfile(p);
-    if (a) setAccount(a);
-    if (tx) {
-      setTransactions(tx.map((t: any) => ({
-        id: t.id,
-        amount: t.amount,
-        type: t.type as 'send' | 'receive',
-        recipient: t.recipient_name,
-        sender: t.sender_name,
-        created_at: t.created_at
-      })));
-    }
-  };
-
-  const onRefresh = async () => {
+  const onRefresh = () => {
     setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
+    setTimeout(() => setRefreshing(false), 1500);
   };
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const cardTranslateY = useAnimatedStyle(() => ({
+    transform: [{ 
+      translateY: interpolate(scrollY.value, [0, 100], [0, -40], Extrapolate.CLAMP) 
+    }],
+  }));
 
   return (
     <View style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.topHeader}>
-        <Pressable style={styles.iconButton} onPress={() => router.push('/profile')}>
-          <User color="#fff" size={24} />
-        </Pressable>
-        <View style={styles.searchBar}>
-          <Search color="rgba(255,255,255,0.4)" size={18} />
-          <Text style={styles.searchText}>Search</Text>
-        </View>
-        <View style={styles.rightIcons}>
-          <Pressable style={styles.iconButton} onPress={() => router.push('/wallet/detail')}>
-            <CreditCard color="#fff" size={24} />
+      {/* Premium Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Money</Text>
+        <View style={styles.headerRight}>
+          <Pressable style={styles.headerIcon} onPress={() => router.push('/contacts')}>
+            <Search color="#fff" size={24} strokeWidth={2.5} />
           </Pressable>
-          <Pressable style={styles.iconButton} onPress={() => router.push('/onboarding/recovery-phrase')}>
-            <LayoutGrid color="#fff" size={24} />
+          <Pressable style={styles.headerIcon} onPress={() => router.push('/wallet')}>
+            <CreditCard color="#fff" size={24} strokeWidth={2.5} />
+          </Pressable>
+          <Pressable style={styles.headerIcon} onPress={() => router.push('/profile')}>
+            <View style={styles.profileCircle}>
+               <Image 
+                 source={{ uri: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop' }} 
+                 style={styles.profileImage} 
+               />
+            </View>
           </Pressable>
         </View>
       </View>
 
-      <ScrollView 
+      <Animated.ScrollView 
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
       >
-        <View style={styles.cardSection}>
-          <Pressable style={styles.cardContainer} onPress={() => router.push('/wallet/detail')}>
-             <LinearGradient 
-                colors={['#1A1A1A', '#000000']}
-                style={styles.cardGraphic}
-             />
-             <View style={styles.cardOverlay}>
-                <Text style={styles.cardBrand}>Zenti Black</Text>
-                <View style={styles.cardNumber}>
-                   <Text style={[styles.cardDot, { marginRight: 2 }]}>••••</Text>
-                   <Text style={[styles.cardDot, { marginRight: 2 }]}>••••</Text>
-                   <Text style={[styles.cardDot, { marginRight: 2 }]}>••••</Text>
-                   <Text style={styles.cardLastFour}>8842</Text>
-                </View>
-             </View>
-          </Pressable>
+        {/* Layered Card Container */}
+        <View style={styles.heroSection}>
+           {/* Background Card (Zenti Card Peeking) */}
+           <Animated.View style={[styles.backgroundCard, cardTranslateY]}>
+              <View style={styles.lockedHeader}>
+                 <View style={styles.lockedBadge}>
+                    <LayoutGrid color="#000" size={14} />
+                    <Text style={styles.lockedText}>Locked</Text>
+                 </View>
+                 <Text style={styles.tagText}>$Irupt</Text>
+              </View>
+           </Animated.View>
+
+           {/* Foreground Card (Balance) */}
+           <View style={styles.balanceCard}>
+              <View style={styles.balanceHeader}>
+                 <Text style={styles.balanceLabel}>Cash balance</Text>
+                 <ChevronRight color="#000" size={20} />
+                 <View style={{ flex: 1 }} />
+                 <Scan color="#000" size={20} opacity={0.5} />
+              </View>
+              <Text style={styles.balanceAmount}>KES {balance.toLocaleString()}</Text>
+              
+              <View style={styles.actionRow}>
+                 <Pressable style={styles.actionButton} onPress={() => router.push('/add-funds')}>
+                    <Text style={styles.actionButtonText}>Add money</Text>
+                 </Pressable>
+                 <Pressable style={styles.actionButton} onPress={() => router.push('/withdraw' as any)}>
+                    <Text style={styles.actionButtonText}>Withdraw</Text>
+                 </Pressable>
+              </View>
+           </View>
         </View>
 
-        {/* Greeting & Quick Actions */}
-        <View style={styles.mainContent}>
-          <View style={styles.greetingRow}>
-            <View>
-              <Text style={styles.greetingText}>{getGreeting()},</Text>
-              <Text style={styles.nameText}>{profile?.full_name?.split(' ')[0] || 'Dina'}</Text>
-            </View>
-            <Pressable 
-              style={styles.sendRequestButton} 
-              onPress={() => router.push('/pay')}
-            >
-              <Text style={styles.sendRequestText}>Send or Request</Text>
-            </Pressable>
-          </View>
-
-          {/* Balance info */}
-          <View style={styles.balanceInfo}>
-             <Text style={styles.balanceLabel}>Balance</Text>
-             <Text style={styles.balanceAmount}>KES {account?.balance?.toLocaleString() || '7,854.43'}</Text>
-             <Text style={styles.autoReload}>Auto Reload On</Text>
-          </View>
-
-          {/* Transaction List */}
-          <View style={styles.transactionsHeader}>
-             <Text style={styles.sectionTitle}>Latest Transactions</Text>
-             <Pressable>
-                <LayoutGrid color="rgba(255,255,255,0.4)" size={20} />
-             </Pressable>
-          </View>
-
-          {transactions.map((tx) => (
-            <Pressable key={tx.id} style={styles.transactionItem}>
-               <View style={styles.txIcon}>
-                  {tx.type === 'send' ? <ArrowUpRight color="#FF4D4D" size={20} /> : <ArrowDownLeft color="#00FF88" size={20} />}
-               </View>
-               <View style={styles.txDetails}>
-                  <Text style={styles.txName}>{tx.type === 'send' ? tx.recipient : tx.sender}</Text>
-                  <Text style={styles.txMeta}>{tx.type === 'send' ? 'Sent - Allowance' : 'Received - Payment'}</Text>
-               </View>
-               <Text style={[styles.txAmount, { color: tx.type === 'send' ? '#fff' : '#00FF88' }]}>
-                  {tx.type === 'send' ? '-' : '+'}KES {tx.amount.toLocaleString()}
-               </Text>
-            </Pressable>
-          ))}
+        {/* Status Section */}
+        <View style={styles.statusSection}>
+           <View style={styles.statusRow}>
+              <View style={styles.statusBadge}>
+                 <View style={styles.statusDot} />
+                 <Text style={styles.statusTitle}>Green status</Text>
+              </View>
+              <Text style={styles.statusSub}>KES 496.85 away</Text>
+           </View>
+           <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: '60%' }]} />
+           </View>
         </View>
-      </ScrollView>
 
-      {/* Floating Action Button for Scan (since no nav bar) */}
-      <Pressable style={styles.fab} onPress={() => router.push('/pay')}>
-          <Scan color="#000" size={28} strokeWidth={2.5} />
-      </Pressable>
+        {/* More for you Section */}
+        <View style={styles.discoverySection}>
+           <Text style={styles.discoveryTitle}>More for you</Text>
+           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.discoveryScroll}>
+              <Pressable style={styles.discoveryTile}>
+                 <Text style={styles.tileLabel}>Zenti Green</Text>
+                 <Text style={styles.tileTitle}>Turn spending into status</Text>
+                 <View style={styles.tileFooter}>
+                    <View style={styles.miniTile} />
+                 </View>
+              </Pressable>
+              <Pressable style={[styles.discoveryTile, { backgroundColor: '#1A1A1A' }]}>
+                 <Text style={styles.tileLabel}>Savings</Text>
+                 <Text style={styles.tileTitle}>Save while you spend</Text>
+              </Pressable>
+           </ScrollView>
+        </View>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -181,192 +170,206 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
   },
-  topHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 24,
-    gap: 12,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  searchBar: {
-    flex: 1,
-    height: 44,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  searchText: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  rightIcons: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  cardSection: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 32,
-  },
-  cardContainer: {
-    width: width - 40,
-    height: (width - 40) * 0.62,
-    borderRadius: 24,
-    overflow: 'hidden',
-    backgroundColor: '#111',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  cardGraphic: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.6,
-  },
-  cardOverlay: {
-    flex: 1,
-    padding: 24,
     justifyContent: 'space-between',
-  },
-  cardBrand: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-    fontStyle: 'italic',
-  },
-  cardNumber: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardDot: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 24,
-    letterSpacing: -2,
-    marginTop: 4,
-  },
-  cardLastFour: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-    marginLeft: 8,
-  },
-  mainContent: {
     paddingHorizontal: 20,
-    paddingBottom: 100,
+    height: 60,
   },
-  greetingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 32,
-  },
-  greetingText: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  nameText: {
+  headerTitle: {
     color: '#fff',
-    fontSize: 32,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  sendRequestButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 24,
-  },
-  sendRequestText: {
-    color: '#000',
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  balanceInfo: {
-    marginBottom: 40,
-  },
-  balanceLabel: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  balanceAmount: {
-    color: '#fff',
-    fontSize: 40,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     letterSpacing: -1,
   },
-  autoReload: {
-    color: 'rgba(255,255,255,0.3)',
-    fontSize: 13,
-    marginTop: 4,
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  transactionsHeader: {
+  headerIcon: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    backgroundColor: '#333',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  heroSection: {
+    paddingHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 32,
+  },
+  backgroundCard: {
+    backgroundColor: '#CCFF00', // Lime green
+    height: 180,
+    borderRadius: 24,
+    marginBottom: -140, // Pull foreground card up
+    zIndex: 1,
+  },
+  lockedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+  lockedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
+  },
+  lockedText: {
+    color: '#000',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tagText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '600',
+    opacity: 0.6,
+  },
+  balanceCard: {
+    backgroundColor: '#fff',
+    borderRadius: 28,
+    padding: 24,
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  balanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  balanceLabel: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#000',
+    marginRight: 4,
+  },
+  balanceAmount: {
+    fontSize: 64,
+    fontWeight: '800',
+    color: '#000',
+    letterSpacing: -2,
+    marginBottom: 24,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: '#F2F2F7',
+    paddingVertical: 14,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  actionButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  statusSection: {
+    paddingHorizontal: 16,
+    marginBottom: 40,
+  },
+  statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
-  sectionTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  transactionItem: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    gap: 8,
   },
-  txIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+  statusDot: {
+    width: 8,
+    height: 12,
+    borderRadius: 2,
+    backgroundColor: '#00FF88',
   },
-  txDetails: {
-    flex: 1,
-  },
-  txName: {
+  statusTitle: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  txMeta: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 13,
-  },
-  txAmount: {
     fontSize: 16,
     fontWeight: '700',
   },
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 20,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+  statusSub: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 2,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#00FF88',
+    borderRadius: 2,
+  },
+  discoverySection: {
+    paddingLeft: 16,
+  },
+  discoveryTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 16,
+  },
+  discoveryScroll: {
+    paddingRight: 16,
+    gap: 12,
+  },
+  discoveryTile: {
+    width: 280,
+    height: 200,
+    backgroundColor: '#111',
+    borderRadius: 24,
+    padding: 20,
+    justifyContent: 'space-between',
+  },
+  tileLabel: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  tileTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '800',
+    lineHeight: 28,
+  },
+  tileFooter: {
     alignItems: 'center',
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+  },
+  miniTile: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#00FF88',
+    borderRadius: 8,
   }
 });

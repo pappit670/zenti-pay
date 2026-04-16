@@ -320,7 +320,7 @@ export default function SecuritySettings() {
           </LinearGradient>
         </BlurView>
 
-        <Pressable onPress={() => router.push('/remote-lock')}>
+        <Pressable onPress={() => router.push('/remote-lock' as any)}>
           <BlurView intensity={25} tint="dark" style={styles.remoteLockBlur}>
             <LinearGradient
               colors={['rgba(255, 68, 68, 0.2)', 'rgba(255, 68, 68, 0.05)']}

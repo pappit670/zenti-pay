@@ -90,10 +90,10 @@ export default function BusinessDashboardGlass() {
         .eq('user_id', user.id)
         .eq('is_active', true);
 
-      const todaySales = todayTxns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
-      const monthlyRevenue = monthlyTxns?.reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+      const todaySales = todayTxns?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0;
+      const monthlyRevenue = monthlyTxns?.reduce((sum: number, t: any) => sum + Number(t.amount), 0) || 0;
       const uniqueCustomers = new Set(
-        monthlyTxns?.map(t => (t as any).sender_name).filter(Boolean)
+        monthlyTxns?.map((t: any) => t.sender_name).filter(Boolean)
       ).size;
 
       setStats({
@@ -195,7 +195,7 @@ export default function BusinessDashboardGlass() {
 
         <Text style={styles.sectionTitle}>Quick Actions</Text>
 
-        <Pressable onPress={() => router.push('/business/invoices')}>
+        <Pressable onPress={() => router.push('/business/invoices' as any)}>
           <BlurView intensity={20} tint="dark" style={styles.actionCardBlur}>
             <LinearGradient
               colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.02)']}
@@ -213,7 +213,7 @@ export default function BusinessDashboardGlass() {
           </BlurView>
         </Pressable>
 
-        <Pressable onPress={() => router.push('/business/qr-codes')}>
+        <Pressable onPress={() => router.push('/business/qr-codes' as any)}>
           <BlurView intensity={20} tint="dark" style={styles.actionCardBlur}>
             <LinearGradient
               colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.02)']}
@@ -231,7 +231,7 @@ export default function BusinessDashboardGlass() {
           </BlurView>
         </Pressable>
 
-        <Pressable onPress={() => router.push('/business/customers')}>
+        <Pressable onPress={() => router.push('/business/customers' as any)}>
           <BlurView intensity={20} tint="dark" style={styles.actionCardBlur}>
             <LinearGradient
               colors={['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.02)']}
@@ -251,7 +251,7 @@ export default function BusinessDashboardGlass() {
 
         <View style={styles.transactionsHeader}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <Pressable onPress={() => router.push('/business/analytics')}>
+          <Pressable onPress={() => router.push('/business/analytics' as any)}>
             <Text style={styles.seeAllText}>See all</Text>
           </Pressable>
         </View>

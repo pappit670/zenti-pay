@@ -48,12 +48,12 @@ export default function BusinessReputation() {
       setReviews(data as Review[]);
 
       const totalReviews = data.length;
-      const averageRating = data.reduce((sum, r) => sum + r.rating, 0) / totalReviews || 0;
-      const fiveStarCount = data.filter(r => r.rating === 5).length;
-      const fourStarCount = data.filter(r => r.rating === 4).length;
-      const threeStarCount = data.filter(r => r.rating === 3).length;
-      const twoStarCount = data.filter(r => r.rating === 2).length;
-      const oneStarCount = data.filter(r => r.rating === 1).length;
+      const averageRating = data.reduce((sum: number, r: any) => sum + r.rating, 0) / totalReviews || 0;
+      const fiveStarCount = data.filter((r: any) => r.rating === 5).length;
+      const fourStarCount = data.filter((r: any) => r.rating === 4).length;
+      const threeStarCount = data.filter((r: any) => r.rating === 3).length;
+      const twoStarCount = data.filter((r: any) => r.rating === 2).length;
+      const oneStarCount = data.filter((r: any) => r.rating === 1).length;
 
       setStats({
         averageRating,

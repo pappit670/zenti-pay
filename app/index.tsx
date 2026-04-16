@@ -6,9 +6,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
 import { useZenti } from '@/contexts/ZentiContext';
 
+import { ColorValue } from 'react-native';
+
 const { width } = Dimensions.get('window');
 
-const CARD_COLORS = [
+type CardColorConfig = {
+  id: string;
+  name: string;
+  colors: readonly [ColorValue, ColorValue, ...ColorValue[]];
+  textColor: string;
+};
+
+const CARD_COLORS: CardColorConfig[] = [
   { id: '1', name: 'Zenti Classic', colors: ['#1A1A1A', '#333333'], textColor: '#fff' },
   { id: '2', name: 'Ocean Breeze', colors: ['#00B4DB', '#0083B0'], textColor: '#fff' },
   { id: '3', name: 'Sunset Glow', colors: ['#F09819', '#EDDE5D'], textColor: '#fff' },
@@ -20,11 +29,11 @@ const CARD_COLORS = [
 export default function Index() {
   const router = useRouter();
   const { updateCardState } = useZenti();
-  const [selectedColor, setSelectedColor] = useState(CARD_COLORS[4]); // Default to Ember Revival
+  const [selectedColor, setSelectedColor] = useState<CardColorConfig>(CARD_COLORS[4]); // Default to Ember Revival
 
   const handleGetCard = () => {
-    updateCardState({ color: selectedColor.colors[0] });
-    router.push('/onboarding/recovery-phrase');
+    updateCardState({ color: selectedColor.colors[0] as string, isSetup: true });
+    router.replace('/(tabs)');
   };
 
   return (
